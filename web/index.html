@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Exchange</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 { color: #333; }
+        .container { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .form-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 10px 5px 10px 0; }
+        button:hover { background-color: #0056b3; }
+        .btn-danger { background-color: #dc3545; }
+        .btn-danger:hover { background-color: #c82333; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; min-height: 100px; max-height: 300px; overflow-y: auto; font-size: 12px; }
+        .status { color: #666; font-style: italic; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .loading { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>📈 Stock Exchange</h1>
+    
+    <div class="container">
+        <h2>Users</h2>
+        <button onclick="loadUsers()">🔄 Refresh Users</button>
+        <p class="status" id="status"></p>
+        <pre id="data">Click "Refresh Users" or wait for data to load...</pre>
+    </div>
+
+    <div class="container">
+        <h2>Buy Stock</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="buyUserId">User ID:</label>
+                <select id="buyUserId">
+                    <option value="1">1 - Alice</option>
+                    <option value="2">2 - Bob</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="buySymbol">Stock Symbol:</label>
+                <select id="buySymbol" onchange="updateBuyPrice()">
+                    <option value="AAPL">AAPL - $150</option>
+                    <option value="GOOG">GOOG - $2800</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="buyQty">Quantity:</label>
+                <input type="number" id="buyQty" value="1" min="1">
+            </div>
+            <div class="form-group">
+                <label for="buyPrice">Price per Share:</label>
+                <input type="number" id="buyPrice" value="150" step="0.01" min="0">
+            </div>
+        </div>
+        <button onclick="submitBuyOrder()">💳 Buy Stock</button>
+        <p class="status" id="buyStatus"></p>
+    </div>
+
+    <div class="container">
+        <h2>Sell Stock</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="sellUserId">User ID:</label>
+                <select id="sellUserId">
+                    <option value="1">1 - Alice</option>
+                    <option value="2">2 - Bob</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sellSymbol">Stock Symbol:</label>
+                <select id="sellSymbol" onchange="updateSellPrice()">
+                    <option value="AAPL">AAPL - $150</option>
+                    <option value="GOOG">GOOG - $2800</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="sellQty">Quantity:</label>
+                <input type="number" id="sellQty" value="1" min="1">
+            </div>
+            <div class="form-group">
+                <label for="sellPrice">Price per Share:</label>
+                <input type="number" id="sellPrice" value="150" step="0.01" min="0">
+            </div>
+        </div>
+        <button onclick="submitSellOrder()" class="btn-danger">📊 Sell Stock</button>
+        <p class="status" id="sellStatus"></p>
+    </div>
+    
+    <script>
+        const API_URL = "";  // Use relative URLs to avoid CORS issues
+        const stockPrices = {
+            AAPL: 150.0,
+            GOOG: 2800.0
+        };
+
+        function updateBuyPrice() {
+            const symbol = document.getElementById("buySymbol").value;
+            document.getElementById("buyPrice").value = stockPrices[symbol] || 0;
+        }
+
+        function updateSellPrice() {
+            const symbol = document.getElementById("sellSymbol").value;
+            document.getElementById("sellPrice").value = stockPrices[symbol] || 0;
+        }
+
+        function loadUsers() {
+            console.log("Fetching users...");
+            document.getElementById("status").innerText = "Loading...";
+            document.getElementById("status").className = "status loading";
+            
+            fetch("/users")
+                .then(res => {
+                    console.log("Response status:", res.status);
+                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                    return res.json();
+                })
+                .then(data => {
+                    console.log("Users data received:", data);
+                    document.getElementById("status").innerText = `✓ Updated ${new Date().toLocaleTimeString()}`;
+                    document.getElementById("status").className = "status success";
+                    
+                    if (!data || data.length === 0) {
+                        document.getElementById("data").innerText = "No users found";
+                    } else {
+                        document.getElementById("data").innerText = JSON.stringify(data, null, 2);
+                    }
+                })
+                .catch(err => {
+                    console.error("Error loading users:", err);
+                    document.getElementById("status").innerText = "✗ Error: " + err.message;
+                    document.getElementById("status").className = "status error";
+                    document.getElementById("data").innerText = "Failed to load users. Check console for details.";
+                });
+        }
+
+        function submitBuyOrder() {
+            const userId = parseInt(document.getElementById("buyUserId").value);
+            const symbol = document.getElementById("buySymbol").value;
+            const qty = parseInt(document.getElementById("buyQty").value);
+            const price = parseFloat(document.getElementById("buyPrice").value);
+            
+            console.log("Submitting buy order:", { userId, symbol, qty, price });
+            
+            document.getElementById("buyStatus").innerText = "Placing order...";
+            document.getElementById("buyStatus").className = "status loading";
+            
+            fetch("/buy", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, symbol, qty, price })
+            })
+                .then(res => res.text().then(text => ({ status: res.status, ok: res.ok, text: text })))
+                .then(({ status, ok, text }) => {
+                    console.log("Response:", { status, ok, text });
+                    if (!ok) throw new Error(text || `HTTP error! status: ${status}`);
+                    return text;
+                })
+                .then(msg => {
+                    console.log("Buy order response:", msg);
+                    document.getElementById("buyStatus").innerText = "✓ " + msg;
+                    document.getElementById("buyStatus").className = "status success";
+                    
+                    // Refresh users to show updated portfolio
+                    setTimeout(loadUsers, 500);
+                })
+                .catch(err => {
+                    console.error("Error placing buy order:", err);
+                    document.getElementById("buyStatus").innerText = "✗ " + err.message;
+                    document.getElementById("buyStatus").className = "status error";
+                });
+        }
+
+        function submitSellOrder() {
+            const userId = parseInt(document.getElementById("sellUserId").value);
+            const symbol = document.getElementById("sellSymbol").value;
+            const qty = parseInt(document.getElementById("sellQty").value);
+            const price = parseFloat(document.getElementById("sellPrice").value);
+            
+            console.log("Submitting sell order:", { userId, symbol, qty, price });
+            
+            document.getElementById("sellStatus").innerText = "Placing order...";
+            document.getElementById("sellStatus").className = "status loading";
+            
+            fetch("/sell", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, symbol, qty, price })
+            })
+                .then(res => res.text().then(text => ({ status: res.status, ok: res.ok, text: text })))
+                .then(({ status, ok, text }) => {
+                    console.log("Response:", { status, ok, text });
+                    if (!ok) throw new Error(text || `HTTP error! status: ${status}`);
+                    return text;
+                })
+                .then(msg => {
+                    console.log("Sell order response:", msg);
+                    document.getElementById("sellStatus").innerText = "✓ " + msg;
+                    document.getElementById("sellStatus").className = "status success";
+                    
+                    // Refresh users to show updated portfolio
+                    setTimeout(loadUsers, 500);
+                })
+                .catch(err => {
+                    console.error("Error placing sell order:", err);
+                    document.getElementById("sellStatus").innerText = "✗ " + err.message;
+                    document.getElementById("sellStatus").className = "status error";
+                });
+        }
+
+        // Load users when page is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM Content Loaded");
+            updateBuyPrice();
+            updateSellPrice();
+            loadUsers();
+        });
+
+        // Also try loading on window load as backup
+        window.addEventListener('load', function() {
+            console.log("Window Load Event");
+            updateBuyPrice();
+            updateSellPrice();
+            loadUsers();
+        });
+    </script>
+</body>
+</html>
