@@ -1,3 +1,0 @@
-/home/dd127079/repos/stock_exchange/build/CMakeFiles/stock_exchange.dir
-/home/dd127079/repos/stock_exchange/build/CMakeFiles/edit_cache.dir
-/home/dd127079/repos/stock_exchange/build/CMakeFiles/rebuild_cache.dir
