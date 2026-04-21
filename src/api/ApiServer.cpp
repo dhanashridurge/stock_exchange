@@ -1,11 +1,8 @@
 #include "ApiServer.hpp"
-
 #include "../external/json.hpp"
-
 #include <fstream>
 #include <sstream>
 #include <iostream>
-
 using json = nlohmann::json;
 
 ApiServer::ApiServer() {
@@ -18,7 +15,6 @@ void ApiServer::loadStockPrices() {
         std::cerr << "Warning: unable to open data/stocks.json" << std::endl;
         return;
     }
-
     json j;
     file >> j;
     for (auto& [symbol, value] : j.items()) {
@@ -32,7 +28,6 @@ double ApiServer::getStockPrice(const std::string& symbol) const {
 }
 
 void ApiServer::setup(httplib::Server& svr, PortfolioManager& pm, MatchingEngine& me) {
-
     // Add CORS headers to all responses
     svr.set_post_routing_handler([](const auto& req, auto& res) {
         res.set_header("Access-Control-Allow-Origin", "*");
@@ -49,86 +44,63 @@ void ApiServer::setup(httplib::Server& svr, PortfolioManager& pm, MatchingEngine
     });
 
     svr.Get("/", [](auto&, auto& res) {
-
         std::ifstream file("web/index.html");
-
         if (file.good()) {
-
             std::stringstream buffer;
-
             buffer << file.rdbuf();
-
             res.set_content(buffer.str(), "text/html");
-
         } else {
-
             res.set_content("<h1>Welcome to Stock Exchange</h1>", "text/html");
-
         }
-
     });
 
     svr.Post("/buy", [&](auto& req, auto& res) {
-
         auto j = json::parse(req.body);
-
         bool success = pm.buy(j["userId"], j["symbol"], j["qty"], j["price"]);
-
         if (success) {
             res.set_content("Buy Order Executed", "text/plain");
         } else {
             res.status = 400;
             res.set_content("Buy Order Failed: insufficient funds", "text/plain");
         }
-
     });
  
     svr.Post("/sell", [&](auto& req, auto& res) {
-
         auto j = json::parse(req.body);
-
         bool success = pm.sell(j["userId"], j["symbol"], j["qty"], j["price"]);
-
         if (success) {
             res.set_content("Sell Order Executed", "text/plain");
         } else {
             res.status = 400;
             res.set_content("Sell Order Failed: insufficient holdings", "text/plain");
         }
-
     });
  
     svr.Get("/users", [&](auto&, auto& res) {
-
         auto users = pm.getAllUsers();
- 
         json arr = json::array();
-
         for (auto u : users) {
-
             json j;
-
             j["id"] = u->getId();
-
             j["name"] = u->getName();
-
             j["balance"] = u->getBalance();
-
-            j["portfolio"] = u->getPortfolio();
-
-            double nav = u->getBalance();
-            for (const auto& [symbol, qty] : u->getPortfolio()) {
-                nav += qty * getStockPrice(symbol);
-            }
-            j["nav"] = nav;
-
-            arr.push_back(j);
-
+            json portfolio_json = json::object();
+            for (const auto& [symbol, holding] : u->getPortfolio()) {
+                portfolio_json[symbol] = {
+                    {"quantity", holding.quantity},
+                    {"avg_price", holding.avgPrice}
+                };
         }
- 
+        j["portfolio"] = portfolio_json;
+        // NAV calculation
+        double nav = u->getBalance();
+        for (const auto& [symbol, holding] : u->getPortfolio()) {
+            nav += holding.quantity * getStockPrice(symbol);
+        }
+        j["nav"] = nav;
+        arr.push_back(j);
+        }
         res.set_content(arr.dump(4), "application/json");
-
     });
-
 }
  

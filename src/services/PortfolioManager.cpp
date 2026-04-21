@@ -24,7 +24,7 @@ bool PortfolioManager::buy(int userId, std::string symbol, int qty, double price
     double total = qty * price;
     if (!u->withdraw(total)) return false;
  
-    u->addStock(symbol, qty);
+    u->addStock(symbol, qty, price);
     return true;
 }
  
