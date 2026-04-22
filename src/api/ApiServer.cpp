@@ -1,5 +1,6 @@
 #include "ApiServer.hpp"
 #include "../external/json.hpp"
+#include "../valuation/PortfolioValuation.hpp"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -28,6 +29,7 @@ double ApiServer::getStockPrice(const std::string& symbol) const {
 }
 
 void ApiServer::setup(httplib::Server& svr, PortfolioManager& pm, MatchingEngine& me) {
+    svr.set_mount_point("/", "./web");
     // Add CORS headers to all responses
     svr.set_post_routing_handler([](const auto& req, auto& res) {
         res.set_header("Access-Control-Allow-Origin", "*");
@@ -101,6 +103,79 @@ void ApiServer::setup(httplib::Server& svr, PortfolioManager& pm, MatchingEngine
         arr.push_back(j);
         }
         res.set_content(arr.dump(4), "application/json");
+    });
+
+    // ------------------------------------------------------------
+    // NEW: portfolio page
+    // ------------------------------------------------------------
+    svr.Get("/portfolio", [](const httplib::Request&, httplib::Response& res) {
+
+        std::ifstream file("web/portfolio.html");
+
+        if (file.good()) {
+            std::stringstream buffer;
+            buffer << file.rdbuf();
+            res.set_content(buffer.str(), "text/html");
+        } else {
+            res.status = 404;
+            res.set_content("portfolio.html not found", "text/plain");
+        }
+    });
+
+    // ------------------------------------------------------------
+    // Portfolio valuation API (JSON, powered by PortfolioValuation)
+    // ------------------------------------------------------------
+    svr.Get(R"(/portfolio/(\d+))",
+        [&](const httplib::Request& req, httplib::Response& res) {
+
+        int userId = std::stoi(req.matches[1]);
+
+        auto allUsers = pm.getAllUsers();
+        std::shared_ptr<User> user = nullptr;
+
+        for (auto& u : allUsers) {
+            if (u->getId() == userId) {
+                user = u;
+                break;
+            }
+        }
+
+        if (!user) {
+            res.status = 404;
+            res.set_content("User not found", "text/plain");
+            return;
+        }
+
+        // -------- Build market_data JSON --------
+        json market_data = json::object();
+        for (const auto& [symbol, price] : stockPrices) {
+            market_data[symbol] = {
+                { "last_price", price }
+            };
+        }
+
+        // -------- Build users JSON (as expected by valuation lib) --------
+        json users = json::array();
+
+        json portfolio = json::object();
+        for (const auto& [symbol, pos] : user->getPortfolio()) {
+            portfolio[symbol] = {
+                { "quantity", pos.quantity },
+                { "avg_price", pos.avgPrice }
+            };
+        }
+
+        users.push_back({
+            { "id", user->getId() },
+            { "name", user->getName() },
+            { "balance", user->getBalance() },
+            { "portfolio", portfolio }
+        });
+
+        // -------- Run valuation --------
+        json result = valuation::value_users(market_data, users);
+
+        res.set_content(result.dump(4), "application/json");
     });
 }
  

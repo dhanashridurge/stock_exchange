@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>User Portfolio</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        select {
+            padding: 6px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 85%;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: right;
+        }
+
+        th {
+            background: #f3f3f3;
+        }
+
+        td:first-child,
+        th:first-child {
+            text-align: left;
+        }
+
+        .pos {
+            color: green;
+            font-weight: bold;
+        }
+
+        .neg {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>User Portfolio</h1>
+
+    <select id="userSelect">
+        <option value="">-- Select User --</option>
+    </select>
+
+    <div id="summary"></div>
+
+    <!-- JS loaded last so DOM is ready -->
+    <script src="/portfolio.js"></script>
+
+</body>
+
+</html>

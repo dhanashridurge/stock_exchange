@@ -34,7 +34,12 @@
     
     <div class="container">
         <h2>Users</h2>
-        <button onclick="loadUsers()">🔄 Refresh Users</button>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="loadUsers()">Refresh Users</button>
+            <a href="portfolio.html">
+                <button>User Portfolio</button>
+            </a>
+        </div>
         <p class="status" id="status"></p>
         <pre id="data">Click "Refresh Users" or wait for data to load...</pre>
     </div>
