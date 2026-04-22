@@ -6,11 +6,11 @@ void PortfolioManager::addUser(int id, std::string name, double balance) {
 }
  
 std::shared_ptr<User> PortfolioManager::getUser(int id) {
-    std::lock_guard<std::mutex> lock(mtx);
     return users.count(id) ? users[id] : nullptr;
 }
  
 bool PortfolioManager::deposit(int userId, double amt) {
+    std::lock_guard<std::mutex> lock(mtx);
     auto u = getUser(userId);
     if (!u) return false;
     u->deposit(amt);
@@ -18,6 +18,7 @@ bool PortfolioManager::deposit(int userId, double amt) {
 }
  
 bool PortfolioManager::buy(int userId, std::string symbol, int qty, double price) {
+    std::lock_guard<std::mutex> lock(mtx);
     auto u = getUser(userId);
     if (!u) return false;
  
@@ -29,6 +30,7 @@ bool PortfolioManager::buy(int userId, std::string symbol, int qty, double price
 }
  
 bool PortfolioManager::sell(int userId, std::string symbol, int qty, double price) {
+    std::lock_guard<std::mutex> lock(mtx);
     auto u = getUser(userId);
     if (!u) return false;
  
@@ -39,7 +41,6 @@ bool PortfolioManager::sell(int userId, std::string symbol, int qty, double pric
 }
  
 std::vector<std::shared_ptr<User>> PortfolioManager::getAllUsers() {
-    std::lock_guard<std::mutex> lock(mtx);
     std::vector<std::shared_ptr<User>> res;
     for (auto &p : users) res.push_back(p.second);
     return res;

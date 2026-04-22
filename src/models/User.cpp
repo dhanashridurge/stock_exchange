@@ -1,7 +1,9 @@
 #include "User.hpp"
  
 User::User(int id, std::string name, double balance)
-    : id(id), name(name), balance(balance) {}
+    : id(id), name(name), balance(balance) {
+    portfolio.clear();
+}
  
 int User::getId() { return id; }
 
@@ -27,7 +29,9 @@ bool User::withdraw(double amt) {
 }
  
 void User::addStock(std::string symbol, int qty, double price) {
-   std::lock_guard<std::mutex> lock(mtx);
+   if(portfolio.find(symbol) == portfolio.end()) {
+       portfolio[symbol] = {0, 0.0};
+   }
    auto& holding = portfolio[symbol];
    int oldQty = holding.quantity;
    double oldAvg = holding.avgPrice;
@@ -41,18 +45,19 @@ void User::addStock(std::string symbol, int qty, double price) {
 }
  
 bool User::removeStock(std::string symbol, int qty) {
-   std::lock_guard<std::mutex> lock(mtx);
    auto it = portfolio.find(symbol);
    if (it == portfolio.end() || it->second.quantity < qty)
        return false;
    it->second.quantity -= qty;
    if (it->second.quantity == 0)
-       portfolio.erase(it);
+   {
+       it->second.avgPrice = 0.0; // reset avg price when quantity is zero
+   }
+
    return true;
 }
  
-std::unordered_map<std::string, StockHolding> User::getPortfolio() {
-    std::lock_guard<std::mutex> lock(mtx);
+const std::unordered_map<std::string, StockHolding>& User::getPortfolio() const {
     return portfolio;
 }
  

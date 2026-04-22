@@ -1,13 +1,9 @@
 #pragma once
 
 #include "../models/User.hpp"
-
 #include <unordered_map>
-
 #include <memory>
-
 #include <mutex>
-
 #include <vector>
  
 class PortfolioManager {

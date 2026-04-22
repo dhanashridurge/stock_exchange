@@ -80,7 +80,7 @@ void ApiServer::setup(httplib::Server& svr, PortfolioManager& pm, MatchingEngine
         auto users = pm.getAllUsers();
         json arr = json::array();
         for (auto u : users) {
-            json j;
+            json j = json::object();
             j["id"] = u->getId();
             j["name"] = u->getName();
             j["balance"] = u->getBalance();

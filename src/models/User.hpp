@@ -29,6 +29,6 @@ public:
     bool withdraw(double amt);
     void addStock(std::string symbol, int qty, double price);
     bool removeStock(std::string symbol, int qty);
-    std::unordered_map<std::string, StockHolding> getPortfolio();
+    const std::unordered_map<std::string, StockHolding>& getPortfolio() const;
 };
  
