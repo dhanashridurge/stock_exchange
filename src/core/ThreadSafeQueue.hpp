@@ -2,6 +2,7 @@
 #include <queue>
 #include <mutex>
 #include <condition_variable>
+#include <optional>
  
 template<typename T>
 class ThreadSafeQueue {
@@ -26,5 +27,20 @@ public:
         T val = q.front();
         q.pop();
         return val;
+    }
+    // Non-blocking try_pop
+    std::optional<T> try_pop() {
+        std::lock_guard<std::mutex> lock(mtx);
+        if (q.empty()) {
+            return std::nullopt;
+        }
+        T val = q.front();
+        q.pop();
+        return val;
+    }
+
+    bool empty() {
+        std::lock_guard<std::mutex> lock(mtx);
+        return q.empty();
     }
 };
