@@ -4,10 +4,22 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <algorithm>
+#include <random>
 using json = nlohmann::json;
 
-ApiServer::ApiServer() {
+ApiServer::ApiServer()
+    : rng(std::random_device{}()) {
     loadStockPrices();
+}
+
+void ApiServer::refreshStockPrices() {
+    std::uniform_real_distribution<double> dist(-0.02, 0.02);
+    for (auto& [symbol, price] : stockPrices) {
+        double change = dist(rng);
+        double nextPrice = price * (1.0 + change);
+        price = std::max(0.01, std::round(nextPrice * 100.0) / 100.0);
+    }
 }
 
 void ApiServer::loadStockPrices() {
@@ -79,6 +91,7 @@ void ApiServer::setup(httplib::Server& svr, PortfolioManager& pm, MatchingEngine
     });
  
     svr.Get("/users", [&](auto&, auto& res) {
+        refreshStockPrices();
         auto users = pm.getAllUsers();
         json arr = json::array();
         for (auto u : users) {
@@ -147,6 +160,7 @@ void ApiServer::setup(httplib::Server& svr, PortfolioManager& pm, MatchingEngine
         }
 
         // -------- Build market_data JSON --------
+        refreshStockPrices();
         json market_data = json::object();
         for (const auto& [symbol, price] : stockPrices) {
             market_data[symbol] = {
@@ -180,6 +194,7 @@ void ApiServer::setup(httplib::Server& svr, PortfolioManager& pm, MatchingEngine
 
     // Get current stock prices
     svr.Get("/prices", [&](const httplib::Request&, httplib::Response& res) {
+        refreshStockPrices();
         json prices = json::object();
         for (const auto& [symbol, price] : stockPrices) {
             prices[symbol] = price;

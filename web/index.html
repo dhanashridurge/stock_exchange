@@ -138,23 +138,9 @@
                 // Update the global stockPrices object
                 Object.assign(stockPrices, prices);
 
-                // Update buy price field if it exists
-                const buyPriceInput = document.getElementById("buyPrice");
-                if (buyPriceInput && document.getElementById("buySymbol")) {
-                    const buySymbol = document.getElementById("buySymbol").value;
-                    if (buySymbol && stockPrices[buySymbol]) {
-                        buyPriceInput.value = stockPrices[buySymbol].toFixed(2);
-                    }
-                }
-
-                // Update sell price field if it exists
-                const sellPriceInput = document.getElementById("sellPrice");
-                if (sellPriceInput && document.getElementById("sellSymbol")) {
-                    const sellSymbol = document.getElementById("sellSymbol").value;
-                    if (sellSymbol && stockPrices[sellSymbol]) {
-                        sellPriceInput.value = stockPrices[sellSymbol].toFixed(2);
-                    }
-                }
+                // Update buy/sell prices from the latest live quotes
+                updateBuyPrice();
+                updateSellPrice();
 
                 // Update symbol labels with live prices
                 updateSymbolLabels();
@@ -190,12 +176,24 @@
 
         function updateBuyPrice() {
             const symbol = document.getElementById("buySymbol").value;
-            document.getElementById("buyPrice").value = (stockPrices[symbol] || 0).toFixed(2);
+            const buyPriceInput = document.getElementById("buyPrice");
+            if (!buyPriceInput || !symbol) return;
+            if (Object.prototype.hasOwnProperty.call(stockPrices, symbol)) {
+                buyPriceInput.value = stockPrices[symbol].toFixed(2);
+            } else {
+                buyPriceInput.value = "0.00";
+            }
         }
 
         function updateSellPrice() {
             const symbol = document.getElementById("sellSymbol").value;
-            document.getElementById("sellPrice").value = (stockPrices[symbol] || 0).toFixed(2);
+            const sellPriceInput = document.getElementById("sellPrice");
+            if (!sellPriceInput || !symbol) return;
+            if (Object.prototype.hasOwnProperty.call(stockPrices, symbol)) {
+                sellPriceInput.value = stockPrices[symbol].toFixed(2);
+            } else {
+                sellPriceInput.value = "0.00";
+            }
         }
 
         function loadUsers() {
