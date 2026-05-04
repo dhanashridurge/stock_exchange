@@ -177,5 +177,14 @@ void ApiServer::setup(httplib::Server& svr, PortfolioManager& pm, MatchingEngine
 
         res.set_content(result.dump(4), "application/json");
     });
+
+    // Get current stock prices
+    svr.Get("/prices", [&](const httplib::Request&, httplib::Response& res) {
+        json prices = json::object();
+        for (const auto& [symbol, price] : stockPrices) {
+            prices[symbol] = price;
+        }
+        res.set_content(prices.dump(4), "application/json");
+    });
 }
  

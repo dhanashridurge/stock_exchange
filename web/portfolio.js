@@ -1,3 +1,7 @@
+let currentUserId = null;
+let refreshInterval = null;
+const REFRESH_INTERVAL = 2000; // Refresh every 2 seconds
+
 document.addEventListener("DOMContentLoaded", loadUsers);
 
 function cls(v) {
@@ -31,7 +35,18 @@ function loadUsers() {
 
       sel.onchange = () => {
         if (sel.value) {
+          // Stop previous polling if any
+          if (refreshInterval) {
+            clearInterval(refreshInterval);
+          }
+
+          currentUserId = sel.value;
           loadPortfolio(sel.value);
+
+          // Start polling for updates
+          refreshInterval = setInterval(() => {
+            loadPortfolio(currentUserId);
+          }, REFRESH_INTERVAL);
         }
       };
     })
@@ -67,6 +82,11 @@ function loadPortfolio(userId) {
       }
 
       document.getElementById("summary").innerHTML = `
+        <div style="margin-bottom: 20px;">
+          <button onclick="refreshPortfolio()">🔄 Refresh Now</button>
+          <span style="color: #666; margin-left: 10px; font-size: 12px;">Auto-refreshing every 2 seconds...</span>
+        </div>
+
         <h3>${p.name}</h3>
 
         <table>
@@ -98,4 +118,11 @@ function loadPortfolio(userId) {
     .catch(err => {
       console.error("Error loading portfolio:", err);
     });
+}
+
+function refreshPortfolio() {
+  if (currentUserId) {
+    console.log("Manual refresh triggered for user:", currentUserId);
+    loadPortfolio(currentUserId);
+  }
 }

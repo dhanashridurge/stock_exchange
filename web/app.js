@@ -1,4 +1,71 @@
 const API_URL = "";  // Use relative URLs to avoid CORS issues
+let stockPrices = {
+    AAPL: 150.0,
+    GOOG: 2800.0
+};
+let priceRefreshInterval = null;
+
+// Start polling for live prices on page load
+document.addEventListener("DOMContentLoaded", () => {
+    updateStockPrices();
+    // Update prices every 1 second
+    priceRefreshInterval = setInterval(updateStockPrices, 1000);
+});
+
+async function updateStockPrices() {
+    try {
+        const res = await fetch("/prices");
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+        const prices = await res.json();
+        console.log("Updated stock prices:", prices);
+
+        // Update the global stockPrices object
+        Object.assign(stockPrices, prices);
+
+        // Update buy price field if AAPL is selected
+        const buySymbol = document.getElementById("buySymbol").value;
+        if (buySymbol && stockPrices[buySymbol]) {
+            document.getElementById("buyPrice").value = stockPrices[buySymbol].toFixed(2);
+        }
+
+        // Update sell price field if AAPL is selected
+        const sellSymbol = document.getElementById("sellSymbol").value;
+        if (sellSymbol && stockPrices[sellSymbol]) {
+            document.getElementById("sellPrice").value = stockPrices[sellSymbol].toFixed(2);
+        }
+
+        // Update symbol labels with live prices
+        updateSymbolLabels();
+
+    } catch (err) {
+        console.error("Error fetching stock prices:", err);
+    }
+}
+
+function updateSymbolLabels() {
+    // Update buy symbol label
+    const buySymbolSelect = document.getElementById("buySymbol");
+    if (buySymbolSelect) {
+        for (let option of buySymbolSelect.options) {
+            const symbol = option.value;
+            if (stockPrices[symbol]) {
+                option.text = `${symbol} - $${stockPrices[symbol].toFixed(2)}`;
+            }
+        }
+    }
+
+    // Update sell symbol label
+    const sellSymbolSelect = document.getElementById("sellSymbol");
+    if (sellSymbolSelect) {
+        for (let option of sellSymbolSelect.options) {
+            const symbol = option.value;
+            if (stockPrices[symbol]) {
+                option.text = `${symbol} - $${stockPrices[symbol].toFixed(2)}`;
+            }
+        }
+    }
+}
 
 async function loadUsers() {
     console.log("Fetching users...");
